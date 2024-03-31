@@ -57,7 +57,7 @@ function Login() {
 
   return (
     <div className='container-fluid'>
-      <form className='login-container row d-flex align-items-center' onSubmit={handleSubmit}>
+      <form className='login-container rounded rounded-4 row d-flex align-items-center' onSubmit={handleSubmit}>
         <div className="col-12 col-md-6 m-auto bg-white rounded shadow p-0">
           <div className="login-info text-center py-4 d-flex justify-content-center align-items-center">
             <h1 className='fw-bold text-light'>

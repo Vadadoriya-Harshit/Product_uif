@@ -1,0 +1,13 @@
+* {
+    -ms-overflow-style: none;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+body {
+    background-color: rgb(9, 60, 56);
+    font-family: 'Outfit', sans-serif;
+
+}

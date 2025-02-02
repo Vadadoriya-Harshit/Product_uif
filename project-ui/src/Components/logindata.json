@@ -1,7 +1,0 @@
-{
-    "statusCode": "OK",
-    "message": "Successfully Signed In",
-    "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkAxMjM0IiwiaWF0IjoxNzExMzYxNjUyLCJleHAiOjE3MTE0NDgwNTJ9.ZkYyN2A_6yhjJgr2VqN7FCZHhvwMyhTHNSgCHIa4Pz8",
-    "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkAxMjM0IiwiaWF0IjoxNzExMzYxNjUyLCJleHAiOjE3MTE0NDgwNTJ9.ZkYyN2A_6yhjJgr2VqN7FCZHhvwMyhTHNSgCHIa4Pz8",
-    "expirationTime": "24Hr"
-}

@@ -1,11 +1,14 @@
 import { Fragment, useContext, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { useAuthContext } from "../context/AuthContext";
+import { AuthContext } from "../context/AuthContext";
 
 export const ProtectedRoutes = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
-  const { isLoggedIn, logout } = useAuthContext(); // Corrected the context hook here
-
+  const {
+    isLoggedIn,
+    logout,
+  
+  } = useContext<any>(AuthContext);
   // Redirect if not logged in
   useEffect(() => {
     if (!isLoggedIn) {

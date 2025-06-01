@@ -14,7 +14,7 @@ const App = ()=>{
   <BrowserRouter>
     <Suspense fallback={<>Loading</>}>
      <Routes>
-         <Route path="easyGrave" element={<AUD/>}/>
+         <Route path="easyGrave/*" element={<AUD/>}/>
          <Route path="error/*" element={<></>}/>
          <Route path="*" element={<Redirect/>}/>
       </Routes>  

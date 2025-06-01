@@ -1,114 +1,130 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import {
+  createContext,
+  useCallback,
+  useReducer,
+  useState,
+  ReactNode,
+} from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthSDK } from "../auth/auth";
 
-// Define the types for AuthContext
-interface AuthState {
-  // Add your specific state properties here (example: user role, last login time, etc.)
-  userRole: string;
+interface User {
+  name: string;
   lastLogin: string;
+  id: string;
+}
+
+interface AccessToken {
+  access_token?: string;
+  token_type?: string;
+  expires_in?: number;
+  generateTime?: string;
+  refresh_token?: string;
+}
+
+interface AuthState {
+  access_token: AccessToken;
+  isLoggedIn: boolean;
+  role: string;
+  companyName: string;
+  workingDate: string;
+  minDate: string;
+  access: Record<string, any>;
+  uniqueAppId: string;
+  user: User;
+  idealTimer: string;
 }
 
 interface AuthContextType {
-  login: (data: any) => void;
-  logout: () => void;
-  isLoggedIn: boolean;
-  token: string;
-  refreshToken: string;
-  loginUserDetails: any;
-  authState: AuthState; // Add authState here
+  login: (payload: AuthState, stopNavigation?: boolean) => void;
+  logout: (reqFlag?: string) => void;
+  isLoggedIn: () => boolean;
+  authState: AuthState;
 }
 
 const initialState: AuthState = {
-  userRole: 'guest',
-  lastLogin: '',
+  access_token: {},
+  isLoggedIn: false,
+  role: "",
+  companyName: "",
+  workingDate: "",
+  minDate: "",
+  access: {},
+  uniqueAppId: "",
+  user: {
+    name: "",
+    lastLogin: "",
+    id: "",
+  },
+  idealTimer: "",
 };
 
-// Create the AuthContext
-export const AuthContext = createContext<AuthContextType>({
-  login: () => {},
-  logout: () => {},
-  isLoggedIn: false,
-  token: '',
-  refreshToken: '',
-  loginUserDetails: null,
-  authState: initialState, // Set default authState
-});
+const authReducer = (state: AuthState, action: { type: string; payload?: AuthState }): AuthState => {
+  switch (action.type) {
+    case "login":
+      return action.payload || state;
+    case "logout":
+      return initialState;
+    default:
+      return state;
+  }
+};
 
-// Custom hook to use the AuthContext
-export const useAuthContext = () => useContext(AuthContext);
+let timeoutID: NodeJS.Timeout | null = null;
 
-// Provider component to wrap around your app
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [token, setToken] = useState<string>('');
-  const [refreshToken, setRefreshToken] = useState<string>('');
-  const [loginUserDetails, setLoginUserDetails] = useState<any>(null);
-  const [authState, setAuthState] = useState<AuthState>(initialState); // State for authState
+  const [state, dispatch] = useReducer(authReducer, initialState);
+  const [authenticating, setAuthenticating] = useState<boolean>(true);
+  const navigate = useNavigate();
 
-  // Assuming you may fetch these values from localStorage, API, or other sources
-  useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    const savedRefreshToken = localStorage.getItem('refreshToken');
-    const savedLoginUserDetails = localStorage.getItem('loginUserDetails');
-    const savedAuthState = localStorage.getItem('authState');
+  const isLoggedIn = useCallback(() => {
+    return state.isLoggedIn;
+  }, [state.isLoggedIn]);
 
-    if (savedToken && savedRefreshToken && savedLoginUserDetails) {
-      setToken(savedToken);
-      setRefreshToken(savedRefreshToken);
-      setLoginUserDetails(JSON.parse(savedLoginUserDetails));
-
-      // Parse and set the saved authState if available
-      if (savedAuthState) {
-        setAuthState(JSON.parse(savedAuthState));
-      }
-
-      setIsLoggedIn(true);
-    }
+  const login = useCallback((payload: any, stopNavigation?: boolean) => {
+    dispatch({
+      type: "login",
+      payload: { ...payload, isLoggedIn: true },
+    });
+    AuthSDK.setToken(payload?.RESPONSE?.preloginToken);
+    // AuthSDK.loginUserDetails(payload);
+    setLoginDatainLocalStorage({ ...payload, isLoggedIn: true });
+    if (stopNavigation) return;
   }, []);
 
-  const login = (data: any) => {
-    const { token, refreshToken, userDetails, authState } = data;
-    localStorage.setItem('token', token);
-    localStorage.setItem('refreshToken', refreshToken);
-    localStorage.setItem('loginUserDetails', JSON.stringify(userDetails));
-    localStorage.setItem('authState', JSON.stringify(authState)); // Store authState
+  const logout = useCallback((reqFlag = "N") => {
+    const result = sessionStorage.getItem("authDetails");
+    if (result) {
+      const localStorageAuthState: AuthState = JSON.parse(result);
+      if (localStorageAuthState?.isLoggedIn && localStorageAuthState?.user?.id) {
+        // API.LogoutAPI({
+        //   USER_ID: localStorageAuthState.user.id,
+        //   APP_TRAN_CD: "51",
+        //   REQ_FLAG: reqFlag,
+        // });
+      }
+    }
+    sessionStorage.removeItem("authDetails");
+    dispatch({ type: "logout" });
+    if (timeoutID) clearTimeout(timeoutID);
+    if (window.location.pathname !== "/cbsenfinity/forgotpassword") {
+      navigate("/cbsenfinity/login");
+    }
+  }, [navigate]);
 
-    setToken(token);
-    setRefreshToken(refreshToken);
-    setLoginUserDetails(userDetails);
-    setAuthState(authState); // Set authState
-
-    setIsLoggedIn(true);
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('loginUserDetails');
-    localStorage.removeItem('authState'); // Remove authState
-
-    setToken('');
-    setRefreshToken('');
-    setLoginUserDetails(null);
-    setAuthState(initialState); // Reset authState
-    setIsLoggedIn(false);
+  const setLoginDatainLocalStorage = async (payload: AuthState): Promise<void> => {
+    sessionStorage.setItem("authDetails", JSON.stringify(payload));
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        login,
-        logout,
-        isLoggedIn,
-        token,
-        refreshToken,
-        loginUserDetails,
-        authState, // Pass authState here
-      }}
-    >
+    <AuthContext.Provider value={{ login, logout, isLoggedIn, authState: state }}>
+      {/* {authenticating ? "Loading.." : children} */}
       {children}
     </AuthContext.Provider>
   );
